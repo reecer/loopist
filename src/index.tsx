@@ -6,9 +6,9 @@ import {update} from './reducers';
 import {App} from "./components/Root";
 import {IState, ActionType} from './constants';
 
-declare var window: any;
+import './styles/global.scss';
 
-require('./styles/global.scss');
+declare var window: any;
 
 const initialState: IState = {
     errors: []
