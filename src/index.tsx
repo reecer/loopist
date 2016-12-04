@@ -11,7 +11,9 @@ import './styles/global.scss';
 declare var window: any;
 
 const initialState: IState = {
-    errors: []
+    errors: [],
+    loops: [],
+    bpm: 120
 }
 
 let store = createStore(
