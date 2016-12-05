@@ -7,6 +7,20 @@ export function error(m: string) : IAction {
     }
 }
 
+export function muteMetronome(mute: boolean) : IAction {
+    return {
+        type: ActionType.MuteMetronome,
+        data: mute
+    }
+}
+
+export function updateBPM(bpm: number) : IAction {
+    return {
+        type: ActionType.UpdateBPM,
+        data: bpm
+    }
+}
+
 export function addedLoop(l: ILoop) : IAction {
     return {
         type: ActionType.AddedLoop,
@@ -24,20 +38,6 @@ export function renameLoop(loop: ILoop, name: string) : IAction {
 export function removeLoop(l: ILoop) : IAction {
     return {
         type: ActionType.RmLoop,
-        data: l
-    }
-}
-
-export function startRecording(l: ILoop) : IAction {
-    return {
-        type: ActionType.StartRecord,
-        data: l
-    }
-}
-
-export function stopRecording(l: ILoop) : IAction {
-    return {
-        type: ActionType.StopRecord,
         data: l
     }
 }

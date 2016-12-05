@@ -10,10 +10,13 @@ import './styles/global.scss';
 
 declare var window: any;
 
+const DEFAULT_BPM = 120;
+
 const initialState: IState = {
     errors: [],
     loops: [],
-    bpm: 120
+    bpm: DEFAULT_BPM,
+    metronome: true
 }
 
 let store = createStore(

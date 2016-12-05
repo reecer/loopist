@@ -1,14 +1,16 @@
 import {Component} from 'react';
 
-
 export interface IState {
     errors: string[]
     loops: ILoop[]
     bpm: number
+    metronome: boolean;
 }
 
 export enum ActionType {
     Error = <any>"error",
+    MuteMetronome = <any>"mute_metronome",
+    UpdateBPM = <any>"update_bpm",
     StartRecord = <any>"start_record",
     StopRecord = <any>"stop_record",
     AddedLoop = <any>"added_loop",
@@ -25,9 +27,8 @@ export interface ILoop {
     uid: number;
     context: AudioContext;
     name: string;
-    recording: boolean;
     audio: LoopSource;
-    resolution: number;
+    measures: number;
     buffer: InputBuffer;
 }
 

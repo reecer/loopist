@@ -8,6 +8,16 @@ export function update(state: IState, action: IAction) : IState {
 
             })
 
+        case ActionType.MuteMetronome:
+            return Object.assign({}, state, {
+                metronome: action.data,
+            })
+
+        case ActionType.UpdateBPM:
+            return Object.assign({}, state, {
+                bpm: action.data,
+            })
+
         case ActionType.AddedLoop:
             action.data.uid = Date.now();
             return Object.assign({}, state, {
@@ -29,26 +39,6 @@ export function update(state: IState, action: IAction) : IState {
                 })
             })
 
-        case ActionType.StartRecord:
-            return Object.assign({}, state, {
-                loops: state.loops.map(l => {
-                    if (l.uid == action.data.uid) {
-                        l.recording = true;
-                    }
-                    return l
-                })
-            })
-
-        case ActionType.StopRecord:
-            return Object.assign({}, state, {
-                loops: state.loops.map(l => {
-                    if (l.uid == action.data.uid) {
-                        l.recording = false;
-                    }
-                    return l
-                })
-            })
-            
         default:
             return state;
    }
