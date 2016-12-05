@@ -109,7 +109,6 @@ class Root extends React.Component<IRootProps, void> {
             },
         }
         l.audio.gain.connect(this.context.destination);
-        l.audio.node.connect(l.audio.gain);
 
         const whenDone = (buf: InputBuffer) => {
             l.buffer = buf;
