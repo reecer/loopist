@@ -2,4 +2,19 @@
 .loop {
   border: 1px solid grey;
   padding: 1em;
+
+  .time {
+    span {
+      display: inline-block;
+      border: 1px solid;
+      background: transparent;
+      margin: 1em;
+      height: 4px;
+      width: 4px;
+
+      &.current{
+        background: black;
+      }
+    }
+  }
 }

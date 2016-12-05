@@ -2,7 +2,7 @@
 import * as React from 'react';
 import {connect} from 'react-redux';
 import {Dispatch} from 'redux';
-import {ActionType, Beat, IState, IAction, ILoop, LoopSource} from '../constants';
+import {ActionType, Beat, IState, IAction, ILoop, LoopSource, InputBuffer} from '../constants';
 import {addedLoop, renameLoop, removeLoop} from '../actions';
 import {Icon} from 'react-fa';
 
@@ -22,14 +22,16 @@ interface ILoopState {
   leftChunks: Float32Array,
   rightChunks: Float32Array,
   chunksLength: number;
-  playback: AudioBufferSourceNode;
+  playback: AudioBuffer;
   currentTick: number; // the "beat" we at
   recording: boolean;
+  playing: boolean;
 }
 
 class wavLoop extends React.Component<IWAVLoopProps, ILoopState> {
   queue: IQueueItem[] = [];
   startedRec = false
+  playbackSource: AudioBufferSourceNode;
 
   constructor(props: IWAVLoopProps, state: ILoopState) {
     super(props, state);
@@ -46,7 +48,8 @@ class wavLoop extends React.Component<IWAVLoopProps, ILoopState> {
       playback: null,
       chunksLength: 0,
       currentTick: 0,
-      recording: false
+      recording: false,
+      playing: false
     }
   }
 
@@ -58,8 +61,7 @@ class wavLoop extends React.Component<IWAVLoopProps, ILoopState> {
   render() {
     let p = this.props;
     let {name} = p;
-    let {playback, chunksLength, recording, currentTick} = this.state;
-    let playing = playback !== null;
+    let {playing, playback, chunksLength, recording, currentTick} = this.state;
 
     return (
       <div className="loop">
@@ -73,9 +75,11 @@ class wavLoop extends React.Component<IWAVLoopProps, ILoopState> {
         <input className="play" type="button" value="Play" 
           onClick={() => this.playSound()}/>
 
+        {playback && 
         <input className="playback" type="button" 
           value={playing ? "Stop" : "Playback"}
           onClick={() => playing ? this.stopPlayback() : this.startPlayback()}/>
+        }
 
         <input className="remove" type="button" value="Remove" 
           onClick={this.remove}/>
@@ -86,27 +90,61 @@ class wavLoop extends React.Component<IWAVLoopProps, ILoopState> {
         <div className="chunks">
           {chunksLength + ', ' + currentTick}
         </div>
+        <div className="time">
+          {[0,1,2,3].map(i => 
+            <span key={i} className={this.isCurrentTick(i) ? "current" : ""} />)}
+        </div>
       </div>
     )
   }
 
+  isCurrentTick(i: number) {
+    return this.state.currentTick / 4 == i;
+  }
+
+
+  // Recv tick from timer worker
   tick(ev: MessageEvent) {
     let currentTick = ev.data;
     this.setState(Object.assign({}, this.state, {
       currentTick
     }));
 
+    // TODO: account for measure counts
     if (currentTick == 0) {
-      if(this.startedRec) {
-        this.stopRec();
-      } else {
-        this.startedRec = true;
+      if (this.state.recording) {
+        if (this.startedRec) {
+          this.stopRec();
+          this.startPlayback(); // immediately start playing
+        } else {
+          this.startedRec = true;
+        }
       }
       if (this.queue.length > 0) {
         this.queue.forEach(q => q.work());
         this.queue = [];
       }
     }
+  }
+
+  // Recv event from onaudioprocess
+  recv(ev: AudioProcessingEvent) {
+    let {recording, currentTick} = this.state;
+    if (!recording) return;
+    if (!this.startedRec) return;
+    // this.startedRec = true;
+
+    let leftChunks = ev.inputBuffer.getChannelData(0);
+    let rightChunks = ev.inputBuffer.getChannelData(1);
+    let newLeft = this.state.leftChunks.slice();
+    let newRight = this.state.rightChunks.slice();
+    let newLen = this.state.chunksLength + leftChunks.length;
+
+    this.setState(Object.assign({}, this.state, {
+      leftChunks: mergeBuffers([newLeft, leftChunks], newLen),
+      rightChunks: mergeBuffers([newRight, rightChunks], newLen),
+      chunksLength: newLen,
+    }));
   }
 
   remove() {
@@ -130,92 +168,93 @@ class wavLoop extends React.Component<IWAVLoopProps, ILoopState> {
     if (this.state.recording) return;
     console.debug('starting recording');
     this.startedRec = false;
+    let {audio} = this.props;
+
+    audio.node.connect(audio.gain);
+
+    if (this.state.playing) {
+      this.stopPlayback();
+    }
 
     this.setState(Object.assign({}, this.state, {
       leftChunks: new Float32Array(0),
       rightChunks: new Float32Array(0),
       chunksLength: 0,
       playback: null,
+      playing: false,
       recording: true
     }))
   }
 
+  // Stop recording and copy to playback
   stopRec() {
     let {recording} = this.state;
     if (!recording) return;
     console.debug('stopping recording');
+    this.startedRec = false;
 
     let {audio} = this.props;
 
     audio.node.disconnect();
     this.setState(Object.assign({}, this.state, {
-      recording: false
+      recording: false,
+      playback: this.copyPlayback()
     }))
-  }
-
-  recv(ev: AudioProcessingEvent) {
-    let {recording, currentTick} = this.state;
-    if (!recording) return;
-    if (!this.startedRec && currentTick != 0) return;
-    // this.startedRec = true;
-
-    let leftChunks = ev.inputBuffer.getChannelData(0);
-    let rightChunks = ev.inputBuffer.getChannelData(1);
-    let newLeft = this.state.leftChunks.slice();
-    let newRight = this.state.rightChunks.slice();
-    let newLen = this.state.chunksLength + leftChunks.length;
-
-    this.setState(Object.assign({}, this.state, {
-      leftChunks: mergeBuffers([newLeft, leftChunks], newLen),
-      rightChunks: mergeBuffers([newRight, rightChunks], newLen),
-      chunksLength: newLen,
-    }));
   }
 
   // Play what we've recorded
   startPlayback() {
-    console.debug('playing back');
-    let {audio, context, buffer, bpm} = this.props;
-    let {chunksLength, leftChunks, rightChunks} = this.state;
-    let buf: AudioBuffer;
-
-    if (buffer instanceof AudioBuffer) {
-      buf = context.createBuffer(2, chunksLength, buffer.sampleRate);
-    } else return alert('no buffer?');
-
-    buf.copyToChannel(leftChunks, 0);
-    buf.copyToChannel(rightChunks, 1);
-
-    let source = context.createBufferSource();
-    source.buffer = buf;
-    source.loop = true;
-    source.connect(audio.gain);
+    let {playback} = this.state;
+    let {audio} = this.props;
+    let source = this.newSource(playback);
 
     console.log("playback len", source.buffer.duration);
+
+    this.playbackSource = source;
+    source.loop = true;
+    source.connect(audio.gain);
 
     // play at beginning of measure
     this.pushQueue(() => source.start())
 
     //  update playback so we know we're playing
     this.setState(Object.assign({}, this.state, {
-      playback: source,
+      playing: true
     }));
   }
 
   // Stop playing last record
   stopPlayback() {
-    if (!this.state.playback) return;
+    if (!this.state.playback || !this.state.playing) return;
 
-    this.state.playback.stop();
-    this.state.playback.disconnect();
+    this.playbackSource.stop();
+    // this.state.playback.disconnect();
     this.setState(Object.assign({}, this.state, {
-      playback: null
+      playing: false
     }));
   }
     
-  newSource() : AudioBufferSourceNode {
-    let {buffer} = this.props;
+  // copy whats in recording buffer and return
+  copyPlayback() : AudioBuffer {
+    let {audio, context, buffer, bpm} = this.props;
+    let {chunksLength, leftChunks, rightChunks} = this.state;
+    let buf: AudioBuffer;
+
+    if (buffer instanceof AudioBuffer) {
+      buf = context.createBuffer(2, chunksLength, buffer.sampleRate);
+    } else alert('no buffer?');
+
+    buf.copyToChannel(leftChunks, 0);
+    buf.copyToChannel(rightChunks, 1);
+    return buf;
+  }
+
+  newSource(buffer?: InputBuffer) : AudioBufferSourceNode {
     let source = this.props.context.createBufferSource();
+
+    if (!buffer) {
+      buffer = this.props.buffer;
+    }
     
     if (buffer instanceof AudioBuffer) {
       source.buffer = buffer;
