@@ -1,0 +1,36 @@
+{
+  "name": "yt-give-ui",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/react": "^0.14.52",
+    "@types/react-dom": "^0.14.19",
+    "@types/react-fa": "^4.0.28",
+    "@types/react-redux": "^4.4.35",
+    "@types/redux": "^3.6.0",
+    "inline-worker": "^1.1.0",
+    "node-sass": "^3.7.0",
+    "react": "^15.1.0",
+    "react-dom": "^15.1.0",
+    "react-fa": "^4.1.2",
+    "react-redux": "^4.4.5",
+    "recorderjs": "^1.0.1",
+    "redux": "^3.5.2",
+    "typescript": "^2.0.10"
+  },
+  "devDependencies": {
+    "css-loader": "^0.23.1",
+    "file-loader": "^0.8.5",
+    "sass-loader": "^3.2.0",
+    "style-loader": "^0.13.1",
+    "ts-loader": "^0.8.2",
+    "url-loader": "^0.5.7",
+    "webpack": "^1.13.1"
+  }
+}

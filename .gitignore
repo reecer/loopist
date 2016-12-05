@@ -1,8 +1,2 @@
 node_modules/
-typings/
-webpack.config.js
-index.html
-package.json
-tsconfig.json
-typings.json
 dist/
