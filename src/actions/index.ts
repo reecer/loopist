@@ -7,6 +7,13 @@ export function error(m: string) : IAction {
     }
 }
 
+export function globalPause(pause: boolean) : IAction {
+    return {
+        type: ActionType.GlobalPause,
+        data: pause
+    }
+}
+
 export function muteMetronome(mute: boolean) : IAction {
     return {
         type: ActionType.MuteMetronome,

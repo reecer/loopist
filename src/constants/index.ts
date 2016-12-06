@@ -9,6 +9,7 @@ export interface IState {
 
 export enum ActionType {
     Error = <any>"error",
+    GlobalPause = <any>"global_pause",
     MuteMetronome = <any>"mute_metronome",
     UpdateBPM = <any>"update_bpm",
     StartRecord = <any>"start_record",
@@ -38,6 +39,7 @@ export interface LoopSource {
     node: ScriptProcessorNode
 }
 
+export type SourceNode = AudioBufferSourceNode | MediaStreamAudioSourceNode;
 export type InputSource = AudioBuffer | string;
 export type InputBuffer = AudioBuffer | MediaStream;
 

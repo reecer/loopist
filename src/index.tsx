@@ -16,7 +16,7 @@ const initialState: IState = {
     errors: [],
     loops: [],
     bpm: DEFAULT_BPM,
-    metronome: false
+    metronome: false,
 }
 
 let store = createStore(

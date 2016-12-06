@@ -14,6 +14,7 @@
     "@types/react-fa": "^4.0.28",
     "@types/react-redux": "^4.4.35",
     "@types/redux": "^3.6.0",
+    "@types/webaudioapi": "0.0.27",
     "node-sass": "^3.7.0",
     "react": "^15.1.0",
     "react-dom": "^15.1.0",

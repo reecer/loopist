@@ -34,10 +34,5 @@ module.exports = {
             { test: /\.css$/, loader: "style!css" },
             { test: /\.(woff|ttf|eot|svg|png)(\?.*)?/, loader: "url-loader" }
         ],
-
-        // preLoaders: [
-        //     // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
-        //     { test: /\.js$/, loader: "source-map-loader" }
-        // ]
     },
 };

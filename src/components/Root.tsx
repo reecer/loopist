@@ -1,8 +1,9 @@
 import * as React from 'react';
 import {connect} from 'react-redux';
 import {Dispatch} from 'redux';
+import {Icon} from 'react-fa';
 import {ActionType, Beat, IState, IAction, ILoop, InputSource, Timing, BeatMap, InputBuffer} from '../constants';
-import {addedLoop, muteMetronome} from '../actions';
+import {addedLoop, muteMetronome, globalPause} from '../actions';
 import {LoopView} from './Loop';
 
 const SOUND_URL = './beats/';
@@ -16,6 +17,7 @@ interface IRootProps extends IState {
 class Root extends React.Component<IRootProps, void> {
     context: AudioContext
     worker: Worker
+    playQueued: boolean
     beats : BeatMap = {
         [Beat.KICK]: null,
         [Beat.SNARE]: null,
@@ -27,24 +29,27 @@ class Root extends React.Component<IRootProps, void> {
         this.addKick = this.addLoop.bind(this, Beat.KICK);
         this.addSnare = this.addLoop.bind(this, Beat.SNARE);
         this.addHihat = this.addLoop.bind(this, Beat.HIHAT);
+        this.addInput = this.addLoop.bind(this);
         this.metronome = this.metronome.bind(this);
     }
 
     render() {
         console.debug("rendering top-level root");
-        let { errors, loops, bpm } = this.props;
+        let { errors, loops, bpm, metronome } = this.props;
         return (
             <div className="root">
                 <div className="tools">
-                    <input value="Metronome" type="checkbox" 
-                        ref='mute'
-                        checked={this.props.metronome} 
-                        onChange={this.metronome} />
-                    <input value="Add Kick" type="button" 
+                    <label className={"metronome " + (metronome ? '' : 'muted')} onChange={this.metronome}>
+                        Metronome
+                        <input type="checkbox" checked={this.props.metronome}  />
+                    </label>
+                    <input value="Input" type="button" 
+                        onClick={this.addInput} />
+                    <input value="Kick" type="button" 
                         onClick={this.addKick} />
-                    <input value="Add Snare" type="button" 
+                    <input value="Snare" type="button" 
                         onClick={this.addSnare} />
-                    <input value="Add Hihat" type="button" 
+                    <input value="Hihat" type="button" 
                         onClick={this.addHihat} />
                 </div>
                 <div className="loops">
@@ -73,8 +78,8 @@ class Root extends React.Component<IRootProps, void> {
         this.worker = new Worker('./src/worker.js');
         this.worker.addEventListener('message', (ev: MessageEvent) => {
             if (this.props.metronome == false) return;
-            let bpm = ev.data;
-            if (bpm % 4 === 0) {
+            let tick = ev.data;
+            if (tick % 4 === 0) {
                 var osc = this.context.createOscillator();
                 osc.connect( this.context.destination );
                 osc.frequency.value = 100;
@@ -90,9 +95,9 @@ class Root extends React.Component<IRootProps, void> {
     }
 
     metronome(){
-        let el: any = this.refs['mute'];
-        this.props.muteMetronome(el.checked);
+        this.props.muteMetronome(!this.props.metronome);
     }
+    addInput(){}
     addKick(){}
     addSnare(){}
     addHihat(){}
@@ -111,6 +116,7 @@ class Root extends React.Component<IRootProps, void> {
         l.audio.gain.connect(this.context.destination);
 
         const whenDone = (buf: InputBuffer) => {
+            console.log(buf);
             l.buffer = buf;
             this.props.addedLoop(l);
         };
@@ -125,14 +131,8 @@ class Root extends React.Component<IRootProps, void> {
             }
         } else {
             // via input
-            navigator.getUserMedia(
-                {audio: true},
-                whenDone,
-                (err: MediaStreamError) => {
-                    console.error(err);
-                    alert("Error getting media stream");
-                }
-            );
+            navigator.mediaDevices.getUserMedia({audio: true})
+                .then(whenDone)
         }
     
     }
@@ -160,6 +160,7 @@ export const App = connect(
     (s: IState) => s,
     {
         addedLoop,
-        muteMetronome
+        muteMetronome,
+        globalPause
     }
 )(Root);

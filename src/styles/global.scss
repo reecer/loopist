@@ -1,33 +1,53 @@
 $PRIMARY: #C8BEBC;
 $SECONDARY: #B02200;
 $DARK: #282c37;
-//  #9baec8 #d9e1e8 #2b90d9 
 
-#app, .root, body, html {
+#app, body, html {
   width: 100%;
   height: 100%;
   padding: 0;
   margin: 0;
 }
 
+@mixin hoverEffect() {
+  &:hover {
+    cursor: pointer;
+    background-color: grey;
+    color: white;
+  }
+}
+
 #app {
   font-family: Verdana, Geneva, sans-serif;
+  display: flex;
 
-  .root {
-    display: flex;
-  }
-  
-  .nav-container {
+  .tools {
     display: flex;
     flex-direction: column;
-  }
-  
-  .clickable:hover {
-    cursor: pointer;
-  }
-  
-  .form {
-    background-color: white;
-    color: $DARK;
+    align-items: center;
+
+    input[type="button"] {
+      @include hoverEffect();
+      border: 1px solid grey;
+      background: none;
+      width: 5em;
+      height: 5em;
+      border-radius: 5em;
+      margin: 1em;
+    }
+    .metronome {
+      @include hoverEffect();
+      border: 1px solid grey;
+      margin: 1em;
+      padding: 1em;
+      border-radius: 5em;
+
+      &.muted {
+        background-color: red;
+      }
+      & > input[type="checkbox"] {
+        display: none;
+      }
+    }
   }
 }

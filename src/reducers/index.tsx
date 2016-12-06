@@ -8,6 +8,11 @@ export function update(state: IState, action: IAction) : IState {
 
             })
 
+        case ActionType.GlobalPause:
+            return Object.assign({}, state, {
+                paused: action.data,
+            })
+
         case ActionType.MuteMetronome:
             return Object.assign({}, state, {
                 metronome: action.data,
