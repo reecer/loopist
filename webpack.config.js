@@ -3,7 +3,7 @@ var webpack = require('webpack');
 module.exports = {
     entry: {
       main: "./src/index.tsx",
-      vendors: ['react', 'react-dom', 'redux', 'react-redux']
+      vendors: ['react', 'react-dom', 'redux', 'react-redux', 'react-fa']
     },
     
     output: {

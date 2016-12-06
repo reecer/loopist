@@ -1,5 +1,5 @@
 {
-  "name": "yt-give-ui",
+  "name": "loopist",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -14,13 +14,11 @@
     "@types/react-fa": "^4.0.28",
     "@types/react-redux": "^4.4.35",
     "@types/redux": "^3.6.0",
-    "inline-worker": "^1.1.0",
     "node-sass": "^3.7.0",
     "react": "^15.1.0",
     "react-dom": "^15.1.0",
     "react-fa": "^4.1.2",
     "react-redux": "^4.4.5",
-    "recorderjs": "^1.0.1",
     "redux": "^3.5.2",
     "typescript": "^2.0.10"
   },
