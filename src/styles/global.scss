@@ -21,32 +21,36 @@ $DARK: #282c37;
   font-family: Verdana, Geneva, sans-serif;
   display: flex;
 
-  .tools {
+  .root {
     display: flex;
-    flex-direction: column;
-    align-items: center;
 
-    input[type="button"] {
-      @include hoverEffect();
-      border: 1px solid grey;
-      background: none;
-      width: 5em;
-      height: 5em;
-      border-radius: 5em;
-      margin: 1em;
-    }
-    .metronome {
-      @include hoverEffect();
-      border: 1px solid grey;
-      margin: 1em;
-      padding: 1em;
-      border-radius: 5em;
+    .tools {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
 
-      &.muted {
-        background-color: red;
+      input[type="button"] {
+        @include hoverEffect();
+        border: 1px solid grey;
+        background: none;
+        width: 5em;
+        height: 5em;
+        border-radius: 5em;
+        margin: 1em;
       }
-      & > input[type="checkbox"] {
-        display: none;
+      .metronome {
+        @include hoverEffect();
+        border: 1px solid grey;
+        margin: 1em;
+        padding: 1em;
+        border-radius: 5em;
+
+        &.muted {
+          background-color: red;
+        }
+        & > input[type="checkbox"] {
+          display: none;
+        }
       }
     }
   }

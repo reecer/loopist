@@ -3,7 +3,7 @@ import * as React from 'react';
 import {connect} from 'react-redux';
 import {Dispatch} from 'redux';
 import {ActionType, Beat, IState, IAction, ILoop, LoopSource, InputBuffer, SourceNode} from '../constants';
-import {addedLoop, renameLoop, removeLoop} from '../actions';
+import {renameLoop, removeLoop, updateMeasures} from '../actions/loop';
 import {Icon} from 'react-fa';
 
 import '../styles/loop.scss';
@@ -12,12 +12,17 @@ interface IQueueItem {
   work: () => void;
 }
 
-interface IWAVLoopProps extends ILoop {
+// A Loop's state, plus these internal props
+interface ILoopProps extends ILoop {
   bpm: number;
   worker: Worker;
+  updateMeasures?: (l: ILoop, m: number) => IAction,
   renameLoop?: (l: ILoop, n: string) => IAction,
   removeLoop?: (l: ILoop) => IAction,
 }
+
+
+// stateful data that is NOT shared globally (internal state)
 interface ILoopState {
   leftChunks: Float32Array,
   rightChunks: Float32Array,
@@ -28,12 +33,16 @@ interface ILoopState {
   playing: boolean;
 }
 
-class wavLoop extends React.Component<IWAVLoopProps, ILoopState> {
+
+/*
+  A loop sourced from either raw input (getUserMedia) OR a predefined *.wav
+*/
+class Loop extends React.Component<ILoopProps, ILoopState> {
   queue: IQueueItem[] = [];
   startedRec = false
   playbackSource: AudioBufferSourceNode;
 
-  constructor(props: IWAVLoopProps, state: ILoopState) {
+  constructor(props: ILoopProps, state: ILoopState) {
     super(props, state);
     this.recv = this.recv.bind(this);
     this.tick = this.tick.bind(this);
@@ -60,42 +69,54 @@ class wavLoop extends React.Component<IWAVLoopProps, ILoopState> {
 
   render() {
     let p = this.props;
-    let {name} = p;
+    let {name, measures} = p;
     let {playing, playback, chunksLength, recording, currentTick} = this.state;
     let wavFile = this.props.buffer instanceof AudioBuffer;
 
     return (
       <div className="loop">
-        <input className="name" type="text" 
-          defaultValue={name} />
+        <div className="info">
+          {/* TODO: make own component, account for `measures` */}
+          <div className="time">
+            {[0,1,2,3].map(i => 
+              <span key={i} className={this.isCurrentTick(i) ? "current" : ""} />)}
+          </div>
 
-        <input className="record" type="button" value="Record" 
-          disabled={recording}
-          onClick={() => this.startRec()} />
+          {/* TODO: make editable */}
+          <input className="name" type="text" 
+            defaultValue={name} />
 
-        {wavFile && 
-        <input className="play" type="button" value="Play" 
-          onClick={() => this.playSound()}/>
-        }
+          <label>Measures
+          <input className="measures" type="number" 
+            onChange={(e) => this.props.updateMeasures(this.props, parseInt(e.currentTarget.value))}
+            defaultValue={measures.toString()} />
+          </label>
 
-        {playback && 
-        <input className="playback" type="button" 
-          value={playing ? "Stop" : "Playback"}
-          onClick={() => playing ? this.stopPlayback() : this.startPlayback()}/>
-        }
-
-        <input className="remove" type="button" value="Remove" 
-          onClick={this.remove}/>
-
-        <Icon className="is-recording" 
-          name={recording ? "dot-circle-o" : "circle-thin"} />
-
-        <div className="chunks">
-          {chunksLength + ', ' + currentTick}
+          <div className="chunks">
+            {chunksLength}
+          </div>
         </div>
-        <div className="time">
-          {[0,1,2,3].map(i => 
-            <span key={i} className={this.isCurrentTick(i) ? "current" : ""} />)}
+
+        <div className="actions">
+          <input className="record" type="button" value="Record" 
+            disabled={recording}
+            onClick={() => this.startRec()} />
+
+          {wavFile && 
+          <input className="play" type="button" value="Play" 
+            onClick={() => this.playSound()}/> }
+
+          {playback && 
+          <input className="playback" type="button" 
+            value={playing ? "Stop" : "Playback"}
+            onClick={() => playing ? this.stopPlayback() : this.startPlayback()}/> }
+
+          <input className="remove" type="button" value="Remove" 
+            onClick={this.remove}/>
+
+          <Icon className="is-recording" 
+            name={recording ? "dot-circle-o" : "circle-thin"} />
+
         </div>
       </div>
     )
@@ -300,9 +321,10 @@ function mergeBuffers(recBuffers: Float32Array[], recLength: number) {
 
 
 export const LoopView = connect(
-    (s: IState, p: IWAVLoopProps) => p,
+    (s: IState, p: ILoopProps) => p,
     {
         renameLoop,
         removeLoop,
+        updateMeasures
     }
-)(wavLoop);
+)(Loop);

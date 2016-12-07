@@ -12,6 +12,7 @@ export enum ActionType {
     GlobalPause = <any>"global_pause",
     MuteMetronome = <any>"mute_metronome",
     UpdateBPM = <any>"update_bpm",
+    UpdateLpMeasures = <any>"update_loop_measures",
     StartRecord = <any>"start_record",
     StopRecord = <any>"stop_record",
     AddedLoop = <any>"added_loop",

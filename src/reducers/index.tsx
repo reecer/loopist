@@ -1,6 +1,7 @@
 import {IState, ActionType, IAction} from '../constants';
 
 export function update(state: IState, action: IAction) : IState {
+
     switch (action.type) {
         case ActionType.Error:
             return Object.assign({}, state, {
@@ -34,13 +35,25 @@ export function update(state: IState, action: IAction) : IState {
                 loops: state.loops.filter(l => l.uid != action.data.uid)
             })
 
-        case ActionType.RenameLoop:
+        case ActionType.UpdateLpMeasures:
+            var {loop, measures} = action.data;
             return Object.assign({}, state, {
                 loops: state.loops.map(l => {
-                    if (l.uid == action.data.loop.uid) {
-                        l.name = action.data.name;
+                    if (l.uid != action.data.uid) {
+                        l.measures = measures;
                     }
-                    return l
+                    return l;
+                })
+            })
+
+        case ActionType.RenameLoop:
+            var {loop, name} = action.data;
+            return Object.assign({}, state, {
+                loops: state.loops.map(l => {
+                    if (l.uid == loop.uid) {
+                        l.name = name;
+                    }
+                    return l;
                 })
             })
 

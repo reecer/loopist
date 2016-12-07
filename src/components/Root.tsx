@@ -3,7 +3,8 @@ import {connect} from 'react-redux';
 import {Dispatch} from 'redux';
 import {Icon} from 'react-fa';
 import {ActionType, Beat, IState, IAction, ILoop, InputSource, Timing, BeatMap, InputBuffer} from '../constants';
-import {addedLoop, muteMetronome, globalPause} from '../actions';
+import {muteMetronome, globalPause} from '../actions';
+import {addedLoop} from '../actions/loop';
 import {LoopView} from './Loop';
 
 const SOUND_URL = './beats/';
@@ -55,7 +56,6 @@ class Root extends React.Component<IRootProps, void> {
                 <div className="loops">
                     {loops.map(l => 
                         <LoopView 
-                            ref={l.uid.toString()} 
                             key={l.uid} 
                             bpm={bpm}
                             worker={this.worker}
