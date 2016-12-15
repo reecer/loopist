@@ -2,6 +2,7 @@
 import * as React from 'react';
 import {connect} from 'react-redux';
 import {Dispatch} from 'redux';
+import {Ticker} from './Ticker';
 import {ActionType, Beat, IState, IAction, ILoop, LoopSource, InputBuffer, SourceNode} from '../constants';
 import {renameLoop, removeLoop, updateMeasures} from '../actions/loop';
 import {Icon} from 'react-fa';
@@ -77,14 +78,14 @@ class Loop extends React.Component<ILoopProps, ILoopState> {
       <div className="loop">
         <div className="info">
           {/* TODO: make own component, account for `measures` */}
-          <div className="time">
-            {[0,1,2,3].map(i => 
-              <span key={i} className={this.isCurrentTick(i) ? "current" : ""} />)}
-          </div>
+          
+          <Ticker beat={currentTick} />
 
           {/* TODO: make editable */}
           <input className="name" type="text" 
             defaultValue={name} />
+
+          <span className={"is-recording " + recording} /> 
 
           <label>Measures
           <input className="measures" type="number" 
@@ -98,34 +99,36 @@ class Loop extends React.Component<ILoopProps, ILoopState> {
         </div>
 
         <div className="actions">
-          <input className="record" type="button" value="Record" 
-            disabled={recording}
-            onClick={() => this.startRec()} />
+          <span className="record" 
+            title="Start recording"
+            disabled={recording} 
+            onClick={() => this.startRec()}>
+            <Icon name="microphone" />
+          </span> 
 
-          {wavFile && 
-          <input className="play" type="button" value="Play" 
-            onClick={() => this.playSound()}/> }
+          {wavFile &&
+          <span className="play" 
+            title="Play sound"
+            onClick={() => this.playSound()}>
+            <Icon name="play" />
+          </span> }
 
           {playback && 
-          <input className="playback" type="button" 
-            value={playing ? "Stop" : "Playback"}
-            onClick={() => playing ? this.stopPlayback() : this.startPlayback()}/> }
+          <span className="playback" 
+            title="Loop recording"
+            onClick={() => playing ? this.stopPlayback() : this.startPlayback()}> 
+            <Icon name={playing ?"stop" : "repeat"} />
+          </span> }
 
-          <input className="remove" type="button" value="Remove" 
-            onClick={this.remove}/>
-
-          <Icon className="is-recording" 
-            name={recording ? "dot-circle-o" : "circle-thin"} />
-
+          <span className="remove" 
+            title="Remove loop"
+            onClick={this.remove}>
+            <Icon name="trash" />
+          </span> 
         </div>
       </div>
     )
   }
-
-  isCurrentTick(i: number) {
-    return this.state.currentTick / 4 == i;
-  }
-
 
   // Recv tick from timer worker
   tick(ev: MessageEvent) {
@@ -196,7 +199,6 @@ class Loop extends React.Component<ILoopProps, ILoopState> {
   // Start recording
   startRec() {
     if (this.state.recording) return;
-    console.debug('starting recording');
     this.startedRec = false;
     let {audio} = this.props;
 
@@ -220,7 +222,6 @@ class Loop extends React.Component<ILoopProps, ILoopState> {
   stopRec() {
     let {recording} = this.state;
     if (!recording) return;
-    console.debug('stopping recording');
     this.startedRec = false;
 
     let {audio} = this.props;

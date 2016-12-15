@@ -1,3 +1,5 @@
+@import "./mixins.scss";
+
 $PRIMARY: #C8BEBC;
 $SECONDARY: #B02200;
 $DARK: #282c37;
@@ -7,14 +9,6 @@ $DARK: #282c37;
   height: 100%;
   padding: 0;
   margin: 0;
-}
-
-@mixin hoverEffect() {
-  &:hover {
-    cursor: pointer;
-    background-color: grey;
-    color: white;
-  }
 }
 
 #app {
@@ -37,20 +31,6 @@ $DARK: #282c37;
         height: 5em;
         border-radius: 5em;
         margin: 1em;
-      }
-      .metronome {
-        @include hoverEffect();
-        border: 1px solid grey;
-        margin: 1em;
-        padding: 1em;
-        border-radius: 5em;
-
-        &.muted {
-          background-color: red;
-        }
-        & > input[type="checkbox"] {
-          display: none;
-        }
       }
     }
   }

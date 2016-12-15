@@ -20,3 +20,10 @@ export function muteMetronome(mute: boolean) : IAction {
         data: mute
     }
 }
+
+export function updateBPM(bpm: number) : IAction {
+    return {
+        type: ActionType.UpdateBPM,
+        data: bpm
+    }
+}

@@ -1,0 +1,14 @@
+.Ticker {
+  span {
+    display: inline-block;
+    border: 1px solid;
+    background: transparent;
+    margin: 1em;
+    height: 4px;
+    width: 4px;
+
+    &.current{
+      background: black;
+    }
+  }
+}

@@ -3,16 +3,17 @@ import {connect} from 'react-redux';
 import {Dispatch} from 'redux';
 import {Icon} from 'react-fa';
 import {ActionType, Beat, IState, IAction, ILoop, InputSource, Timing, BeatMap, InputBuffer} from '../constants';
-import {muteMetronome, globalPause} from '../actions';
+import {globalPause, updateBPM} from '../actions';
 import {addedLoop} from '../actions/loop';
 import {LoopView} from './Loop';
+import {Metronome} from './Metronome';
 
 const SOUND_URL = './beats/';
 const DEFAULT_LOOPNAME = 'Loop';
 
 interface IRootProps extends IState {
     addedLoop?: (l: ILoop) => void
-    muteMetronome?: (m: boolean) => void
+    updateBPM?: (n: number) => void
 }
 
 class Root extends React.Component<IRootProps, void> {
@@ -27,11 +28,11 @@ class Root extends React.Component<IRootProps, void> {
 
     constructor(props: IRootProps) {
         super(props, props);
+        this.worker = new Worker('./src/worker.js');
         this.addKick = this.addLoop.bind(this, Beat.KICK);
         this.addSnare = this.addLoop.bind(this, Beat.SNARE);
         this.addHihat = this.addLoop.bind(this, Beat.HIHAT);
         this.addInput = this.addLoop.bind(this);
-        this.metronome = this.metronome.bind(this);
     }
 
     render() {
@@ -40,9 +41,12 @@ class Root extends React.Component<IRootProps, void> {
         return (
             <div className="root">
                 <div className="tools">
-                    <label className={"metronome " + (metronome ? '' : 'muted')} onChange={this.metronome}>
-                        Metronome
-                        <input type="checkbox" checked={this.props.metronome}  />
+                    <Metronome worker={this.worker} on={metronome} context={this.context} />
+
+                    <label>BPM
+                        <input className="bpm" type="number" 
+                            onChange={(e) => this.props.updateBPM(parseInt(e.currentTarget.value))}
+                            defaultValue={bpm.toString()} />
                     </label>
                     <input value="Input" type="button" 
                         onClick={this.addInput} />
@@ -71,32 +75,24 @@ class Root extends React.Component<IRootProps, void> {
 
     componentWillReceiveProps(newProps: IRootProps) {
         console.debug('receiving new props', this.props, newProps);
+        // TODO: update worker message tick if BPM changed
+        if (this.props.bpm != newProps.bpm) {
+            this.startTimer(newProps.bpm);
+        }
     }
     
     componentDidMount() {
         this.context = new AudioContext();
-        this.worker = new Worker('./src/worker.js');
         this.worker.addEventListener('message', (ev: MessageEvent) => {
-            if (this.props.metronome == false) return;
-            let tick = ev.data;
-            if (tick % 4 === 0) {
-                var osc = this.context.createOscillator();
-                osc.connect( this.context.destination );
-                osc.frequency.value = 100;
-                osc.start();
-                osc.stop(this.context.currentTime + .1);
-            }
+            // this.setState({tick: ev.data});
         })
         this.startTimer();
     }
 
-    startTimer() {
-        this.worker.postMessage(this.props.bpm);
+    startTimer(bpm?: number) {
+        this.worker.postMessage(bpm || this.props.bpm);
     }
 
-    metronome(){
-        this.props.muteMetronome(!this.props.metronome);
-    }
     addInput(){}
     addKick(){}
     addSnare(){}
@@ -160,7 +156,7 @@ export const App = connect(
     (s: IState) => s,
     {
         addedLoop,
-        muteMetronome,
-        globalPause
+        globalPause,
+        updateBPM
     }
 )(Root);

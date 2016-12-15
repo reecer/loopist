@@ -10,7 +10,7 @@ import './styles/global.scss';
 
 declare var window: any;
 
-const DEFAULT_BPM = 120;
+const DEFAULT_BPM = 60;
 
 const initialState: IState = {
     errors: [],

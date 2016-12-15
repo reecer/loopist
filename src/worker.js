@@ -21,6 +21,8 @@ self.onmessage = (ev) => {
   let bpm = parseInt(ev.data);
   if (isNaN(bpm)) return;
 
+  console.log('Starting worker with bpm', bpm);
+
   var tick = 0;
   let ms = bpmToMS(bpm);
 

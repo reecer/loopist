@@ -7,6 +7,15 @@ export interface IState {
     metronome: boolean;
 }
 
+export interface ILoop {
+    uid: number;
+    context: AudioContext;
+    name: string;
+    audio: LoopSource;
+    measures: number;
+    buffer: InputBuffer;
+}
+
 export enum ActionType {
     Error = <any>"error",
     GlobalPause = <any>"global_pause",
@@ -23,15 +32,6 @@ export enum ActionType {
 export interface IAction {
     type: ActionType;
     data?: any;
-}
-
-export interface ILoop {
-    uid: number;
-    context: AudioContext;
-    name: string;
-    audio: LoopSource;
-    measures: number;
-    buffer: InputBuffer;
 }
 
 // The audio source we want to use/control
