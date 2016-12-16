@@ -7,9 +7,9 @@ import {muteMetronome} from '../actions';
 import '../styles/Metronome.scss';
 
 interface IMetronomeProps {
-  context: AudioContext,
-  worker: Worker,
-  on: boolean,
+  context: AudioContext, // to create a audiable noise
+  worker: Worker,        // our "clock"
+  on: boolean,           // enable audio?
   muteMetronome?: (m: boolean) => IAction
 }
 
@@ -38,7 +38,6 @@ class metronome extends React.Component<IMetronomeProps, IMetronomeState> {
         osc.start();
         osc.stop(context.currentTime + .1);
     }
-
 
     return (
         <div className={"Metronome " + (on ? '' : 'muted')} onClick={toggle}>

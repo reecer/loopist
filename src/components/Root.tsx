@@ -2,7 +2,7 @@ import * as React from 'react';
 import {connect} from 'react-redux';
 import {Dispatch} from 'redux';
 import {Icon} from 'react-fa';
-import {ActionType, Beat, IState, IAction, ILoop, InputSource, Timing, BeatMap, InputBuffer} from '../constants';
+import {ActionType, Beat, IState, IAction, ILoop, InputSource, Timing, InputBuffer} from '../constants';
 import {globalPause, updateBPM} from '../actions';
 import {addedLoop} from '../actions/loop';
 import {LoopView} from './Loop';
@@ -10,6 +10,14 @@ import {Metronome} from './Metronome';
 
 const SOUND_URL = './beats/';
 const DEFAULT_LOOPNAME = 'Loop';
+const WORKER_URL = './src/worker.js';
+const BPM_THROTTLE = 200; // ms throttle for bpm update
+
+// Map of beat names to their buffers
+type BeatMap = ({[s: string] : AudioBuffer});
+
+// Input click callback
+type LoopFn = (e: React.MouseEvent<HTMLInputElement>) => void
 
 interface IRootProps extends IState {
     addedLoop?: (l: ILoop) => void
@@ -19,20 +27,25 @@ interface IRootProps extends IState {
 class Root extends React.Component<IRootProps, void> {
     context: AudioContext
     worker: Worker
-    playQueued: boolean
+    bpmThrottle: number // timeout to clear
     beats : BeatMap = {
         [Beat.KICK]: null,
         [Beat.SNARE]: null,
         [Beat.HIHAT]: null,
     }
+    addInput: LoopFn
+    addKick: LoopFn
+    addSnare: LoopFn
+    addHihat: LoopFn
 
     constructor(props: IRootProps) {
         super(props, props);
-        this.worker = new Worker('./src/worker.js');
+        this.worker = new Worker(WORKER_URL);
+        this.bpmChange = this.bpmChange.bind(this);
+        this.addInput = this.addLoop.bind(this);
         this.addKick = this.addLoop.bind(this, Beat.KICK);
         this.addSnare = this.addLoop.bind(this, Beat.SNARE);
         this.addHihat = this.addLoop.bind(this, Beat.HIHAT);
-        this.addInput = this.addLoop.bind(this);
     }
 
     render() {
@@ -45,8 +58,8 @@ class Root extends React.Component<IRootProps, void> {
 
                     <label>BPM
                         <input className="bpm" type="number" 
-                            onChange={(e) => this.props.updateBPM(parseInt(e.currentTarget.value))}
-                            defaultValue={bpm.toString()} />
+                            onChange={this.bpmChange}
+                            value={bpm.toString()} />
                     </label>
                     <input value="Input" type="button" 
                         onClick={this.addInput} />
@@ -74,18 +87,18 @@ class Root extends React.Component<IRootProps, void> {
     }
 
     componentWillReceiveProps(newProps: IRootProps) {
-        console.debug('receiving new props', this.props, newProps);
-        // TODO: update worker message tick if BPM changed
+        // Update worker beat ticks if BPM changed
         if (this.props.bpm != newProps.bpm) {
-            this.startTimer(newProps.bpm);
+            if (this.bpmThrottle) {
+                clearTimeout(this.bpmThrottle);
+            }
+            this.bpmThrottle = setTimeout(() => this.startTimer(newProps.bpm), 200);
         }
     }
     
     componentDidMount() {
+        // WHY is this an empty object when in the constructor?!!
         this.context = new AudioContext();
-        this.worker.addEventListener('message', (ev: MessageEvent) => {
-            // this.setState({tick: ev.data});
-        })
         this.startTimer();
     }
 
@@ -93,10 +106,10 @@ class Root extends React.Component<IRootProps, void> {
         this.worker.postMessage(bpm || this.props.bpm);
     }
 
-    addInput(){}
-    addKick(){}
-    addSnare(){}
-    addHihat(){}
+    bpmChange(ev: React.FormEvent<HTMLInputElement>) {
+        this.props.updateBPM(parseInt(ev.currentTarget.value));
+    }
+
     addLoop(src: InputSource) {
         let l: ILoop = {
             uid: Date.now(),
@@ -111,31 +124,33 @@ class Root extends React.Component<IRootProps, void> {
         }
         l.audio.gain.connect(this.context.destination);
 
+        // Called after loading InputSource
         const whenDone = (buf: InputBuffer) => {
-            console.log(buf);
             l.buffer = buf;
             this.props.addedLoop(l);
         };
 
-        // Load buffer
+        // Load buffer via wav
         if (typeof(src) === 'string') {
-            // via wav
+            // Hasn't been loaded yet
             if (this.beats[src] === null) {
                 this.loadSound(src, whenDone);
+
+            // Re-use existing load
             } else {
                 whenDone(this.beats[src]);
             }
+        // Load stream via mediaDevices
         } else {
-            // via input
+            // TODO: polyfilly fallybacky
             navigator.mediaDevices.getUserMedia({audio: true})
                 .then(whenDone)
         }
     
     }
 
+    // Load a pre-defined audio WAV to use as an `InputBuffer`
     loadSound(beat: string, done: (b: AudioBuffer) => void) {
-        console.debug('loading sound', beat, this.context);
-
         var request = new XMLHttpRequest();
         request.open('GET', SOUND_URL + beat, true);
         request.responseType = 'arraybuffer';
