@@ -1,11 +1,30 @@
 @import 'global.scss';
 
+$DIM: 15em;
+
 .loop {
-  border: 1px solid grey;
-  padding: 1em;
+  display: flex;
+  flex-direction: column;
+  height: $DIM;
+  width: $DIM;
+  position: relative;
+
+  .border {
+    z-index: -1;
+    position: absolute;
+    left: 0;
+    top: 0;
+    border: 1px solid grey;
+    height: inherit;
+    width: inherit;
+    border-radius: 50%;
+  }
 
   .info {
     padding: 1em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     
     .name {
     }
@@ -14,6 +33,7 @@
     }
 
     .measures {
+      text-align: center;
     }
 
     .chunks {
@@ -23,14 +43,14 @@
   .actions {
     display: flex;
     align-content: center;
+    align-items: center;
 
     & > span {
       @include hoverEffect();
-      border: 1px solid;
       display: inline;
       border-radius: 1em;
-      padding: 1em;
-      margin: 0.5em;
+      padding: 0.5em;
+      margin: auto;
     }
   }
 }

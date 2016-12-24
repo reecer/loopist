@@ -3,11 +3,19 @@ import * as React from 'react';
 import {connect} from 'react-redux';
 import {Dispatch} from 'redux';
 import {Ticker} from './Ticker';
-import {ActionType, Beat, IState, IAction, ILoop, LoopSource, InputBuffer, SourceNode} from '../constants';
+import {ActionType, Beat, IState, IAction, ILoop, LoopSource, InputBuffer, SourceNode, Timing} from '../constants';
 import {renameLoop, removeLoop, updateMeasures} from '../actions/loop';
 import {Icon} from 'react-fa';
 
 import '../styles/loop.scss';
+
+const stopTick = {
+  [Timing.WHOLE]: 0,
+  [Timing.HALF]: 8,
+  [Timing.QUARTER]: 4,
+  // [Timing.EIGTH]: 2,
+  // [Timing.SIXTEENTH]: 1,
+}
 
 interface IQueueItem {
   work: () => void;
@@ -70,16 +78,15 @@ class Loop extends React.Component<ILoopProps, ILoopState> {
 
   render() {
     let p = this.props;
-    let {name, measures} = p;
+    let {name, timing} = p;
     let {playing, playback, chunksLength, recording, currentTick} = this.state;
     let wavFile = this.props.buffer instanceof AudioBuffer;
 
     return (
       <div className="loop">
+        <div className="border" />
         <div className="info">
-          {/* TODO: make own component, account for `measures` */}
-          
-          <Ticker beat={currentTick} />
+          <Ticker beat={currentTick} timing={timing} />
 
           {/* TODO: make editable */}
           <input className="name" type="text" 
@@ -87,10 +94,10 @@ class Loop extends React.Component<ILoopProps, ILoopState> {
 
           <span className={"is-recording " + recording} /> 
 
-          <label>Measures
-          <input className="measures" type="number" 
+          <label className="measures">Measures
+          <input type="number" 
             onChange={(e) => this.props.updateMeasures(this.props, parseInt(e.currentTarget.value))}
-            defaultValue={measures.toString()} />
+            value={timing.toString()} />
           </label>
 
           <div className="chunks">
@@ -137,28 +144,28 @@ class Loop extends React.Component<ILoopProps, ILoopState> {
       currentTick
     }));
 
-    // TODO: account for measure counts
-    if (currentTick == 0) {
-      var toQueue: IQueueItem[] = [];
-      if (this.state.recording) {
-        if (this.startedRec) {
-          this.stopRec();
-          this.startPlayback(); // immediately start playing
-        } else {
-          // truely start recording NOW
-          this.startedRec = true;
-          let source = this.newSource();
-          if (source instanceof MediaStreamAudioSourceNode) {
-            console.log('recording input');
-            source.connect(this.props.audio.node);
-            toQueue.push({work:() => source.disconnect()});
-          }
-        }
-      }
-      if (toQueue.length + this.queue.length > 0) {
+    // determine stopping point
+    let st = stopTick[this.props.timing];
+    if (currentTick == st && this.state.recording && this.startedRec) {
+      this.stopRec();
+      this.startPlayback(); // immediately start playing
+
+      // cleanup disconnects
+      if (this.queue.length > 0) {
         this.queue.forEach(q => q.work());
-        this.queue = toQueue;
+        this.queue = [];
       }
+    }
+
+    // determine starting point
+    if (currentTick == 0) {
+        this.startedRec = true;
+        let source = this.newSource();
+        if (source instanceof MediaStreamAudioSourceNode) {
+          source.connect(this.props.audio.node);
+          // disconnect when finished
+          this.queue.push({work:() => source.disconnect()});
+        }
     }
   }
 
@@ -180,6 +187,7 @@ class Loop extends React.Component<ILoopProps, ILoopState> {
     }));
   }
 
+  // Remove this loop
   remove() {
     if (this.state.recording) {
       this.stopRec();

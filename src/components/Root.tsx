@@ -114,7 +114,7 @@ class Root extends React.Component<IRootProps, void> {
         let l: ILoop = {
             uid: Date.now(),
             context: this.context,
-            measures: 1,
+            timing: Timing.WHOLE,
             name: DEFAULT_LOOPNAME,
             buffer: null,
             audio: {

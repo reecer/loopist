@@ -43,7 +43,7 @@ class metronome extends React.Component<IMetronomeProps, IMetronomeState> {
         <div className={"Metronome " + (on ? '' : 'muted')} onClick={toggle}>
           <label>Metronome</label>
           <input type="checkbox" checked={on}  />
-          <Ticker beat={beat} />
+          <Ticker beat={beat} timing={1} />
         </div>
     );
   }

@@ -21,9 +21,9 @@ export function removeLoop(l: ILoop) : IAction {
     }
 }
 
-export function updateMeasures(loop: ILoop, measures: number) : IAction {
+export function updateMeasures(loop: ILoop, timing: number) : IAction {
     return {
-        type: ActionType.UpdateLpMeasures,
-        data:  {loop, measures}
+        type: ActionType.UpdateLpTiming,
+        data:  {loop, timing}
     }
 }

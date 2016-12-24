@@ -1,4 +1,6 @@
-import {IState, ActionType, IAction} from '../constants';
+import {IState, ActionType, IAction, Timing} from '../constants';
+
+const validTimings: number[] = [1,2,4];//,8,16];
 
 export function update(state: IState, action: IAction) : IState {
 
@@ -20,6 +22,7 @@ export function update(state: IState, action: IAction) : IState {
             })
 
         case ActionType.UpdateBPM:
+
             return Object.assign({}, state, {
                 bpm: action.data,
             })
@@ -35,12 +38,15 @@ export function update(state: IState, action: IAction) : IState {
                 loops: state.loops.filter(l => l.uid != action.data.uid)
             })
 
-        case ActionType.UpdateLpMeasures:
-            var {loop, measures} = action.data;
+        case ActionType.UpdateLpTiming:
+            var {loop, timing} = action.data;
+            if (validTimings.indexOf(timing) === -1) {
+                return state;
+            }
             return Object.assign({}, state, {
                 loops: state.loops.map(l => {
                     if (l.uid != action.data.uid) {
-                        l.measures = measures;
+                        l.timing = timing;
                     }
                     return l;
                 })
