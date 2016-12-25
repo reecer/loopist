@@ -2,12 +2,15 @@
 
 $DIM: 15em;
 
+
+
 .loop {
   display: flex;
   flex-direction: column;
   height: $DIM;
   width: $DIM;
   position: relative;
+  margin: 1em;
 
   .border {
     z-index: -1;

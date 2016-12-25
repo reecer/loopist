@@ -34,7 +34,10 @@ class metronome extends React.Component<IMetronomeProps, IMetronomeState> {
     if (on && beat % 4 === 0) {
         var osc = context.createOscillator();
         osc.connect(context.destination);
-        osc.frequency.value = 100;
+        osc.frequency.value = 85;
+        if (beat === 12) {
+          osc.frequency.value = 100;
+        }
         osc.start();
         osc.stop(context.currentTime + .1);
     }
