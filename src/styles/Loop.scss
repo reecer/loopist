@@ -1,8 +1,6 @@
-@import 'global.scss';
+@import 'mixins.scss';
 
 $DIM: 15em;
-
-
 
 .loop {
   display: flex;
@@ -28,6 +26,10 @@ $DIM: 15em;
     display: flex;
     flex-direction: column;
     align-items: center;
+
+    input {
+      background-color: transparent;
+    }
     
     .name {
     }
@@ -50,9 +52,8 @@ $DIM: 15em;
 
     & > span {
       @include hoverEffect();
+      color: $DARK;
       display: inline;
-      border-radius: 1em;
-      padding: 0.5em;
       margin: auto;
     }
   }

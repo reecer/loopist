@@ -7,6 +7,7 @@ import {globalPause, updateBPM} from '../actions';
 import {addedLoop} from '../actions/loop';
 import {LoopView} from './Loop';
 import {Metronome} from './Metronome';
+import {FreqChart} from './FreqChart';
 
 const SOUND_URL = './beats/';
 const DEFAULT_LOOPNAME = 'Loop';
@@ -24,9 +25,15 @@ interface IRootProps extends IState {
     updateBPM?: (n: number) => void
 }
 
-class Root extends React.Component<IRootProps, void> {
+interface IRootState {
+    hasInput: boolean
+    muteInput: boolean
+}
+
+class Root extends React.Component<IRootProps, IRootState> {
     context: AudioContext
     worker: Worker
+    inputStream: MediaStreamAudioSourceNode;
     bpmThrottle: number // timeout to clear
     beats : BeatMap = {
         [Beat.KICK]: null,
@@ -41,11 +48,16 @@ class Root extends React.Component<IRootProps, void> {
     constructor(props: IRootProps) {
         super(props, props);
         this.worker = new Worker(WORKER_URL);
+        this.mute = this.mute.bind(this);
         this.bpmChange = this.bpmChange.bind(this);
         this.addInput = this.addLoop.bind(this);
         this.addKick = this.addLoop.bind(this, Beat.KICK);
         this.addSnare = this.addLoop.bind(this, Beat.SNARE);
         this.addHihat = this.addLoop.bind(this, Beat.HIHAT);
+        this.state = {
+            hasInput: false,
+            muteInput: true
+        }
     }
 
     render() {
@@ -55,6 +67,11 @@ class Root extends React.Component<IRootProps, void> {
             <div className="root">
                 <div className="tools">
                     <Metronome worker={this.worker} on={metronome} context={this.context} />
+
+                    {this.state.hasInput && 
+                    <div className={"freq" + (this.state.muteInput ? ' muted' : '')} onClick={this.mute}>
+                        <FreqChart context={this.context} source={this.inputStream} />
+                    </div> }
 
                     <label>BPM
                         <input className="bpm" type="number" 
@@ -100,6 +117,7 @@ class Root extends React.Component<IRootProps, void> {
         // WHY is this an empty object when in the constructor?!!
         this.context = new AudioContext();
         this.startTimer();
+        this.getInputSource();
     }
 
     startTimer(bpm?: number) {
@@ -110,6 +128,32 @@ class Root extends React.Component<IRootProps, void> {
         this.props.updateBPM(parseInt(ev.currentTarget.value));
     }
 
+    mute() {
+        // TODO: consider global-level state for input-mute
+        let willMute = !this.state.muteInput;
+        if (willMute) {
+            this.inputStream.disconnect(this.context.destination);
+        } else {
+            this.inputStream.connect(this.context.destination);
+        }
+        this.setState({
+            muteInput: willMute,
+            hasInput: this.state.hasInput
+        })
+    }
+
+    getInputSource() {
+        // TODO: polyfilly fallybacky
+        navigator.mediaDevices.getUserMedia({audio: true})
+            .then(stream => {
+                this.inputStream = this.context.createMediaStreamSource(stream);
+                this.setState({
+                    hasInput: true,
+                    muteInput: this.state.muteInput
+                })
+            });
+    }
+
     addLoop(src: InputSource) {
         let l: ILoop = {
             uid: Date.now(),
@@ -118,10 +162,11 @@ class Root extends React.Component<IRootProps, void> {
             name: DEFAULT_LOOPNAME,
             buffer: null,
             audio: {
-                node: this.context.createScriptProcessor(),
+                processor: this.context.createScriptProcessor(),
                 gain: this.context.createGain(),
             },
         }
+
         l.audio.gain.connect(this.context.destination);
 
         // Called after loading InputSource
@@ -141,8 +186,7 @@ class Root extends React.Component<IRootProps, void> {
                 whenDone(this.beats[src]);
             }
         // Load stream via mediaDevices
-        } else {
-            // TODO: polyfilly fallybacky
+        } else if (this.inputStream) {
             navigator.mediaDevices.getUserMedia({audio: true})
                 .then(whenDone)
         }

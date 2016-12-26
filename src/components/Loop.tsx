@@ -2,19 +2,18 @@
 import * as React from 'react';
 import {connect} from 'react-redux';
 import {Dispatch} from 'redux';
-import {Ticker} from './Ticker';
+import {Icon} from 'react-fa';
 import {ActionType, Beat, IState, IAction, ILoop, LoopSource, InputBuffer, SourceNode, Timing} from '../constants';
 import {renameLoop, removeLoop, updateMeasures} from '../actions/loop';
-import {Icon} from 'react-fa';
+import {Ticker} from './Ticker';
+import {FreqChart} from './FreqChart';
 
-import '../styles/loop.scss';
+import '../styles/Loop.scss';
 
 const stopTick = {
   [Timing.WHOLE]: 0,
   [Timing.HALF]: 8,
   [Timing.QUARTER]: 4,
-  // [Timing.EIGTH]: 2,
-  // [Timing.SIXTEENTH]: 1,
 }
 
 interface IQueueItem {
@@ -30,7 +29,6 @@ interface ILoopProps extends ILoop {
   removeLoop?: (l: ILoop) => IAction,
 }
 
-
 // stateful data that is NOT shared globally (internal state)
 interface ILoopState {
   leftChunks: Float32Array,
@@ -41,7 +39,6 @@ interface ILoopState {
   recording: boolean;
   playing: boolean;
 }
-
 
 /*
   A loop sourced from either raw input (getUserMedia) OR a predefined *.wav
@@ -57,7 +54,7 @@ class Loop extends React.Component<ILoopProps, ILoopState> {
     this.tick = this.tick.bind(this);
     this.remove = this.remove.bind(this);
 
-    props.audio.node.onaudioprocess = this.recv;
+    props.audio.processor.onaudioprocess = this.recv;
     props.worker.addEventListener('message', this.tick);
 
     this.state = {
@@ -71,16 +68,11 @@ class Loop extends React.Component<ILoopProps, ILoopState> {
     }
   }
 
-  componentWillUnmount() {
-    this.props.worker.removeEventListener('message', this.tick);
-    this.stopRec();
-  }
-
   render() {
     let p = this.props;
-    let {name, timing} = p;
+    let {name, timing, context, buffer} = p;
     let {playing, playback, chunksLength, recording, currentTick} = this.state;
-    let wavFile = this.props.buffer instanceof AudioBuffer;
+    let wavFile = buffer instanceof AudioBuffer;
 
     return (
       <div className="loop">
@@ -88,15 +80,16 @@ class Loop extends React.Component<ILoopProps, ILoopState> {
         <div className="info">
           <Ticker beat={currentTick} timing={timing} />
 
-          {/* TODO: make editable */}
+          {/* TODO: test editability */}
           <input className="name" type="text" 
-            defaultValue={name} />
+            onChange={(e) => p.renameLoop(p, e.currentTarget.value)}
+            value={name} />
 
           <span className={"is-recording " + recording} /> 
 
           <label className="measures">Measures
           <input type="number" 
-            onChange={(e) => this.props.updateMeasures(this.props, parseInt(e.currentTarget.value))}
+            onChange={(e) => p.updateMeasures(p, parseInt(e.currentTarget.value))}
             value={timing.toString()} />
           </label>
 
@@ -110,31 +103,36 @@ class Loop extends React.Component<ILoopProps, ILoopState> {
             title="Start recording"
             disabled={recording} 
             onClick={() => this.startRec()}>
-            <Icon name="microphone" />
+            <Icon name="microphone" size="2x" />
           </span> 
 
           {wavFile &&
           <span className="play" 
             title="Play sound"
             onClick={() => this.playSound()}>
-            <Icon name="play" />
+            <Icon name="play" size="2x" />
           </span> }
 
           {playback && 
           <span className="playback" 
             title="Loop recording"
             onClick={() => playing ? this.stopPlayback() : this.startPlayback()}> 
-            <Icon name={playing ?"stop" : "repeat"} />
+            <Icon name={playing ?"stop" : "repeat"} size="2x" />
           </span> }
 
           <span className="remove" 
             title="Remove loop"
             onClick={this.remove}>
-            <Icon name="trash" />
+            <Icon name="trash" size="2x" />
           </span> 
         </div>
       </div>
     )
+  }
+
+  componentWillUnmount() {
+    this.props.worker.removeEventListener('message', this.tick);
+    this.stopRec();
   }
 
   // Recv tick from timer worker
@@ -144,28 +142,32 @@ class Loop extends React.Component<ILoopProps, ILoopState> {
       currentTick
     }));
 
+    let {playing, recording} = this.state;
+
+    if (!this.state.recording && !this.state.playing) return;
+
     // determine stopping point
     let st = stopTick[this.props.timing];
-    if (currentTick == st && this.state.recording && this.startedRec) {
+    if (recording && currentTick == st && this.startedRec) {
       this.stopRec();
       this.startPlayback(); // immediately start playing
-
-      // cleanup disconnects
-      if (this.queue.length > 0) {
-        this.queue.forEach(q => q.work());
-        this.queue = [];
-      }
     }
 
     // determine starting point
     if (currentTick == 0) {
-        this.startedRec = true;
-        let source = this.newSource();
-        if (source instanceof MediaStreamAudioSourceNode) {
-          source.connect(this.props.audio.node);
-          // disconnect when finished
-          this.queue.push({work:() => source.disconnect()});
-        }
+      // cleanup disconnects, start playbacks...
+      if (this.queue.length > 0) {
+        this.queue.forEach(q => q.work());
+        this.queue = [];
+      }
+
+      this.startedRec = true;
+      let source = this.newSource();
+      if (source instanceof MediaStreamAudioSourceNode) {
+        source.connect(this.props.audio.processor);
+        // disconnect when finished
+        this.queue.push({work:() => source.disconnect()});
+      }
     }
   }
 
@@ -208,13 +210,13 @@ class Loop extends React.Component<ILoopProps, ILoopState> {
   startRec() {
     if (this.state.recording) return;
     this.startedRec = false;
-    let {audio} = this.props;
+    let {audio, context} = this.props;
 
     if (this.state.playing) {
       this.stopPlayback();
     }
 
-    audio.node.connect(audio.gain);
+    audio.processor.connect(audio.gain);
 
     this.setState(Object.assign({}, this.state, {
       leftChunks: new Float32Array(0),
@@ -234,7 +236,7 @@ class Loop extends React.Component<ILoopProps, ILoopState> {
 
     let {audio} = this.props;
 
-    audio.node.disconnect();
+    audio.processor.disconnect();
     this.setState(Object.assign({}, this.state, {
       recording: false,
       playback: this.copyPlayback()
@@ -309,8 +311,7 @@ class Loop extends React.Component<ILoopProps, ILoopState> {
     let {audio} = this.props;
     let source = this.newSource();
     source.connect(audio.gain); // why necessary?
-    source.connect(audio.node);
-    // audio.node.connect(audio.gain);
+    source.connect(audio.processor);
     if (source instanceof AudioBufferSourceNode) {
         source.start();
     }

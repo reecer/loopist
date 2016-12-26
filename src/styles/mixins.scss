@@ -1,9 +1,11 @@
 
+$PRIMARY: #C8BEBC;
+$SECONDARY: #B02200;
+$DARK: #282c37;
 
 @mixin hoverEffect() {
   &:hover {
     cursor: pointer;
-    background-color: grey;
-    color: white;
+    color: $PRIMARY;
   }
 }

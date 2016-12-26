@@ -1,0 +1,13 @@
+
+.FreqChart {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
+  width: 200px;
+
+  .bar {
+    width: 1px;
+    background-color: lightgrey;
+  }
+}

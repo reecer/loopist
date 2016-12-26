@@ -54,7 +54,8 @@ export interface IAction {
 // The audio source we want to use/control
 export interface LoopSource {
     gain:  GainNode,          // volume control
-    node: ScriptProcessorNode // where we connect an InputBuffer 
+    // analyser: AnalyserNode,
+    processor: ScriptProcessorNode // where we connect an InputBuffer 
 }
 
 export const Beat = {
@@ -67,8 +68,6 @@ export const Timing = {
     WHOLE: 1,
     HALF: 2,
     QUARTER: 4,
-    // EIGTH: 8,
-    // SIXTEENTH: 16,
 }
 
 export const TimingStep: ({[ts: number] : ({[m: number]: number[]})}) = {
@@ -89,9 +88,5 @@ export const TimingStep: ({[ts: number] : ({[m: number]: number[]})}) = {
         2: [2, 6, 10, 14],
         3: [3, 7, 11, 15],
         4: [4, 8, 12, 16]
-        // 1: [1, 2, 3, 4],
-        // 2: [5, 6, 7, 8],
-        // 3: [9, 10, 11, 12],
-        // 4: [13, 14, 15, 16]
     },
 }
