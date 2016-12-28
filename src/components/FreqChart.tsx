@@ -37,7 +37,7 @@ class freqChart extends React.Component<IFreqProps, IFreqState> {
 
   render() {
     let bars = Array.prototype.map.call(this.state.data, (d: number, i: number) => {
-      let st = {height: d + 'px', display: 'inline'};
+      let st = {height: (d/2) + 'px', display: 'inline'};
       if (d === 0) {
         st.display = 'none';
       }
