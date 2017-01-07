@@ -1,5 +1,8 @@
 @import "./mixins.scss";
 
+$TOOLS_SIZE: 10%;
+$LOOPS_SIZE: 90%;
+
 #app, body, html {
   width: 100%;
   height: 100%;
@@ -20,7 +23,7 @@
     width: 100%;
 
     .tools {
-      width: 5%;
+      width: $TOOLS_SIZE;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -57,7 +60,7 @@
     }
 
     .loops {
-      width: 95%;
+      width: $LOOPS_SIZE;
       display: flex;
       flex-wrap: wrap;
       overflow: auto;
