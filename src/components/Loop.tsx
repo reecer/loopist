@@ -150,7 +150,7 @@ class Loop extends React.Component<ILoopProps, ILoopState> {
     let st = stopTick[this.props.timing];
     if (recording && currentTick == st && this.startedRec) {
       this.stopRec();
-      this.startPlayback(); // immediately start playing
+      this.startPlayback(true); // immediately start playing
     }
 
     // determine starting point
@@ -244,7 +244,7 @@ class Loop extends React.Component<ILoopProps, ILoopState> {
   }
 
   // Play what we've recorded
-  startPlayback() {
+  startPlayback(immediately = false) {
     let {playback} = this.state;
     let {audio} = this.props;
     let source = this.newSource(playback);
@@ -256,8 +256,12 @@ class Loop extends React.Component<ILoopProps, ILoopState> {
     source.loop = true;
     source.connect(audio.gain);
 
-    // play at beginning of measure
-    this.pushQueue(source.start.bind(source))
+    if (immediately) {
+      source.start();
+    } else {
+      // play at beginning of measure
+      this.pushQueue(source.start.bind(source))
+    }
 
     //  update playback so we know we're playing
     this.setState(Object.assign({}, this.state, {
