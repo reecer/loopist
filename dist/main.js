@@ -475,7 +475,7 @@ webpackJsonp([0],{
 	        let st = stopTick[this.props.timing];
 	        if (recording && currentTick == st && this.startedRec) {
 	            this.stopRec();
-	            this.startPlayback(); // immediately start playing
+	            this.startPlayback(true); // immediately start playing
 	        }
 	        // determine starting point
 	        if (currentTick == 0) {
@@ -557,7 +557,7 @@ webpackJsonp([0],{
 	        }));
 	    }
 	    // Play what we've recorded
-	    startPlayback() {
+	    startPlayback(immediately = false) {
 	        let { playback } = this.state;
 	        let { audio } = this.props;
 	        let source = this.newSource(playback);
@@ -567,8 +567,13 @@ webpackJsonp([0],{
 	        this.playbackSource = source;
 	        source.loop = true;
 	        source.connect(audio.gain);
-	        // play at beginning of measure
-	        this.pushQueue(source.start.bind(source));
+	        if (immediately) {
+	            source.start();
+	        }
+	        else {
+	            // play at beginning of measure
+	            this.pushQueue(source.start.bind(source));
+	        }
 	        //  update playback so we know we're playing
 	        this.setState(Object.assign({}, this.state, {
 	            playing: true
@@ -960,7 +965,7 @@ webpackJsonp([0],{
 	
 	
 	// module
-	exports.push([module.id, "#app, body, html {\n  width: 100%;\n  height: 100%;\n  padding: 0;\n  margin: 0; }\n\n#app {\n  font-family: Verdana, Geneva, sans-serif;\n  display: flex; }\n  #app .root, #app .tools, #app .loops {\n    height: 100%; }\n  #app .root {\n    display: flex;\n    width: 100%; }\n    #app .root .tools {\n      width: 5%;\n      display: flex;\n      flex-direction: column;\n      align-items: center;\n      border-right: 1px solid lightgrey;\n      font-size: 10px; }\n      #app .root .tools > * {\n        border: none;\n        border-bottom: 1px solid lightgrey;\n        font-size: inherit;\n        width: 100%;\n        padding: 1em 0; }\n      #app .root .tools .freq.muted .bar {\n        background-color: #B02200; }\n      #app .root .tools .bpm {\n        width: 100%;\n        margin: 0;\n        padding: 0;\n        border: 0; }\n      #app .root .tools input[type=\"button\"] {\n        background: none; }\n        #app .root .tools input[type=\"button\"]:hover {\n          cursor: pointer;\n          color: #C8BEBC; }\n    #app .root .loops {\n      width: 95%;\n      display: flex;\n      flex-wrap: wrap;\n      overflow: auto;\n      justify-content: center;\n      align-content: flex-start;\n      margin-bottom: auto; }\n", ""]);
+	exports.push([module.id, "#app, body, html {\n  width: 100%;\n  height: 100%;\n  padding: 0;\n  margin: 0; }\n\n#app {\n  font-family: Verdana, Geneva, sans-serif;\n  display: flex; }\n  #app .root, #app .tools, #app .loops {\n    height: 100%; }\n  #app .root {\n    display: flex;\n    width: 100%; }\n    #app .root .tools {\n      width: 10%;\n      display: flex;\n      flex-direction: column;\n      align-items: center;\n      border-right: 1px solid lightgrey;\n      font-size: 10px; }\n      #app .root .tools > * {\n        border: none;\n        border-bottom: 1px solid lightgrey;\n        font-size: inherit;\n        width: 100%;\n        padding: 1em 0; }\n      #app .root .tools .freq.muted .bar {\n        background-color: #B02200; }\n      #app .root .tools .bpm {\n        width: 100%;\n        margin: 0;\n        padding: 0;\n        border: 0; }\n      #app .root .tools input[type=\"button\"] {\n        background: none; }\n        #app .root .tools input[type=\"button\"]:hover {\n          cursor: pointer;\n          color: #C8BEBC; }\n    #app .root .loops {\n      width: 90%;\n      display: flex;\n      flex-wrap: wrap;\n      overflow: auto;\n      justify-content: center;\n      align-content: flex-start;\n      margin-bottom: auto; }\n", ""]);
 	
 	// exports
 
